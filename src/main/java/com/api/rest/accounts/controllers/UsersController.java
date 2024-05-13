@@ -8,6 +8,9 @@ import java.util.UUID;
 
 import com.api.rest.accounts.models.CreateOrUpdateUserRequest;
 import com.api.rest.accounts.models.User;
+import com.api.rest.accounts.validators.CreateUserValidator;
+
+import jakarta.ws.rs.BadRequestException;
 
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -16,7 +19,9 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.http.HttpStatus;
 
 @RestController
 @RequestMapping("/users")
@@ -24,7 +29,12 @@ public class UsersController {
     private Map<UUID, User> users = new HashMap<>(); // this is our datebase
 
     @PostMapping("")
-    public User createUser(@RequestBody CreateOrUpdateUserRequest request /* request to create user */) {
+    @ResponseStatus(HttpStatus.CREATED)
+    public User createUser(@RequestBody CreateOrUpdateUserRequest request /* request to create user */)
+            throws BadRequestException {
+        if (!CreateUserValidator.isValid(request)) {
+            throw new BadRequestException("You fucked up");
+        }
         // instantiate a new user
         var user = new User(request.getName(),
                 request.getUsername(),
@@ -60,6 +70,7 @@ public class UsersController {
     }
 
     @DeleteMapping("/{id}")
+    @ResponseStatus(HttpStatus.NO_CONTENT)
     public void deleteUser(@PathVariable String id) {
         var uuid = UUID.fromString(id);
         users.remove(uuid);
